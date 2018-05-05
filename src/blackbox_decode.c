@@ -967,7 +967,10 @@ void printStats(flightLog_t *log, int logIndex, bool raw, bool limits)
     endTimeMins = endTimeSecs / 60;
     endTimeSecs %= 60;
 
-    fprintf(stderr, "\nLog %d of %d", logIndex + 1, log->logCount);
+	if(log->sysConfig.logStartDate[0] != '\0')
+		fprintf(stderr, "\nLog %d of %d, log start datetime: %s", logIndex + 1, log->logCount, log->sysConfig.logStartDate);
+	else
+		fprintf(stderr, "\nLog %d of %d", logIndex + 1, log->logCount);
 
     if (intervalMS > 0 && !raw) {
         fprintf(stderr, ", start %02d:%02d.%03d, end %02d:%02d.%03d, duration %02d:%02d.%03d\n\n",

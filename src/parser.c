@@ -432,8 +432,8 @@ static void parseHeaderLine(flightLog_t *log, mmapStream_t *stream)
     } else if (strcmp(fieldName, "maxthrottle") == 0) {
         log->sysConfig.maxthrottle = atoi(fieldValue);
 
-		// Default the new field name to this older value
-		log->sysConfig.motorOutputHigh = log->sysConfig.maxthrottle;
+        // Default the new field name to this older value
+        log->sysConfig.motorOutputHigh = log->sysConfig.maxthrottle;
     } else if (strcmp(fieldName, "rcRate") == 0) {
         log->sysConfig.rcRate = atoi(fieldValue);
     } else if (strcmp(fieldName, "vbatscale") == 0) {
@@ -469,13 +469,16 @@ static void parseHeaderLine(flightLog_t *log, mmapStream_t *stream)
     } else if (strcmp(fieldName, "acc_1G") == 0) {
         log->sysConfig.acc_1G = atoi(fieldValue);
     } else if (strcmp(fieldName, "motorOutput") == 0) {
-    	int motorOutputs[2];
+        int motorOutputs[2];
 
-    	parseCommaSeparatedIntegers(fieldValue, motorOutputs, 2);
+        parseCommaSeparatedIntegers(fieldValue, motorOutputs, 2);
 
-		log->sysConfig.motorOutputLow = motorOutputs[0];
-		log->sysConfig.motorOutputHigh = motorOutputs[1];
-     }
+        log->sysConfig.motorOutputLow = motorOutputs[0];
+        log->sysConfig.motorOutputHigh = motorOutputs[1];
+    }
+    else if (strcmp(fieldName, "Log start datetime") == 0) {
+        memcpy(log->sysConfig.logStartDate, fieldValue, 29);
+    }
 }
 
 /**
@@ -552,9 +555,9 @@ static int64_t applyPrediction(flightLog_t *log, int fieldIndex, int predictor, 
             if (private->mainHistory[1])
                 value += private->mainHistory[1][FLIGHT_LOG_FIELD_INDEX_TIME];
         break;
-		case FLIGHT_LOG_FIELD_PREDICTOR_MINMOTOR:
-			value += log->sysConfig.motorOutputLow;
-		break;
+        case FLIGHT_LOG_FIELD_PREDICTOR_MINMOTOR:
+            value += log->sysConfig.motorOutputLow;
+        break;
         default:
             fprintf(stderr, "Unsupported field predictor %d\n", predictor);
             exit(-1);
@@ -1127,11 +1130,11 @@ static void flightLogApplyMainFrameTimeRollover(flightLog_t *log)
 
 static void flightLogApplyGPSFrameTimeRollover(flightLog_t *log)
 {
-	int timeFieldIndex = log->gpsFieldIndexes.time;
+    int timeFieldIndex = log->gpsFieldIndexes.time;
 
-	if (timeFieldIndex != -1) {
-		log->private->lastGPS[timeFieldIndex] = flightLogDetectAndApplyTimestampRollover(log, log->private->lastGPS[timeFieldIndex]);
-	}
+    if (timeFieldIndex != -1) {
+        log->private->lastGPS[timeFieldIndex] = flightLogDetectAndApplyTimestampRollover(log, log->private->lastGPS[timeFieldIndex]);
+    }
 }
 
 static bool completeIntraframe(flightLog_t *log, mmapStream_t *stream, uint8_t frameType, const char *frameStart, const char *frameEnd, bool raw)
@@ -1279,7 +1282,7 @@ static bool completeGPSFrame(flightLog_t *log, mmapStream_t *stream, uint8_t fra
     (void) frameEnd;
     (void) raw;
 
-	flightLogApplyGPSFrameTimeRollover(log);
+    flightLogApplyGPSFrameTimeRollover(log);
 
     if (log->private->onFrameReady) {
         log->private->onFrameReady(log, log->private->gpsHomeIsValid, log->private->lastGPS, frameType, log->frameDefs[frameType].fieldCount, frameStart - stream->data, frameEnd - frameStart);
@@ -1307,7 +1310,7 @@ static void resetSysConfigToDefaults(flightLogSysConfig_t *config)
     config->minthrottle = 1150;
     config->maxthrottle = 1850;
     config->motorOutputLow = 1150;
-	config->motorOutputHigh = 1850;
+    config->motorOutputHigh = 1850;
 
     config->vbatref = 4095;
     config->vbatscale = 110;
@@ -1326,6 +1329,8 @@ static void resetSysConfigToDefaults(flightLogSysConfig_t *config)
     config->gyroScale = 1;
 
     config->firmwareType = FIRMWARE_TYPE_UNKNOWN;
+    config->logStartDate[0] = '\0';
+    config->logStartDate[29] = '\0';
 }
 
 bool flightLogParse(flightLog_t *log, int logIndex, FlightLogMetadataReady onMetadataReady, FlightLogFrameReady onFrameReady, FlightLogEventReady onEvent, bool raw)
